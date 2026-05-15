@@ -21,7 +21,11 @@
 [![Anthropic Claude][anthropic-shield]][anthropic-url]
 [![Docker][docker-shield]][docker-url]
 
-[What it does](#what-it-does-in-30-seconds) · [Quick Start](#quick-start) · [User Manual](#user-manual) · [FAQ](#faq) · [Evaluation](#evaluation) · [简体中文](./README.zh-CN.md)
+[What it does](#what-it-does-in-30-seconds) · [Architecture](#architecture) · [Quick Start](#quick-start) · [User Manual](#user-manual) · [FAQ](#faq) · [Evaluation](#evaluation) · [简体中文](./README.zh-CN.md)
+
+<br/>
+
+<img src="./ai_pipeline_plot.png" alt="Data transformation flow: messy Excel sheets on the left, AI in the middle, clean structured data on the right" width="100%">
 
 </div>
 
@@ -65,6 +69,93 @@ Every column is hand-editable. The whole CSV/XLSX is one click to download. Garb
 - **People building portfolios** — this repo is intentionally structured to read like a polished open-source project, not a tutorial.
 
 If you can install Docker Desktop and run one command, you can use this tool.
+
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph User
+        B[Browser]
+    end
+    subgraph Frontend["Next.js 14 Frontend · :3000"]
+        UI["Pages<br/>/ · /upload · /run<br/>/jobs/[id] · /results/[id]"]
+        API_LIB["lib/api.ts<br/>HTTP wrapper"]
+    end
+    subgraph Backend["FastAPI Backend · :8000"]
+        ROUTERS["Routers<br/>files · templates · jobs<br/>results · export · health"]
+        SERVICES["Services<br/>parser · prompt_builder<br/>validator · extractor<br/>job_runner · exporter"]
+        LLM{{LLM Client}}
+    end
+    subgraph Providers["LLM Providers"]
+        MOCK[MockLLMClient<br/>heuristic offline]
+        ANTHROPIC[Anthropic<br/>Claude Sonnet 4.6]
+    end
+    subgraph Storage["Local Storage"]
+        DB[(SQLite<br/>jobs · results<br/>templates · files)]
+        FS[(Filesystem<br/>uploads/ · exports/)]
+    end
+
+    B <--> UI
+    UI <--> API_LIB
+    API_LIB <-->|HTTP/JSON| ROUTERS
+    ROUTERS --> SERVICES
+    SERVICES --> LLM
+    LLM -.->|MODEL_PROVIDER=mock| MOCK
+    LLM -.->|MODEL_PROVIDER=anthropic| ANTHROPIC
+    SERVICES <--> DB
+    SERVICES <--> FS
+```
+
+### Extraction flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as User
+    participant W as Next.js UI
+    participant API as FastAPI
+    participant J as Job Runner<br/>(thread)
+    participant L as LLM
+    participant DB as SQLite
+
+    U->>W: Upload Excel/CSV
+    W->>API: POST /api/files/upload
+    API->>DB: save file metadata
+    API-->>W: file_id + headers + preview
+    U->>W: Pick column, template, max_rows
+    W->>API: POST /api/jobs
+    API->>DB: create job (status=pending)
+    API->>J: spawn daemon thread
+    API-->>W: job_id
+
+    loop every 2s
+        W->>API: GET /api/jobs/{id}
+        API->>DB: read counters
+        API-->>W: progress, status
+    end
+
+    par background extraction
+        loop for each row (max_concurrency=3)
+            J->>L: prompt(template, input_text)
+            L-->>J: raw JSON
+            alt _unprocessable signal
+                J->>DB: result.status = archived
+            else valid output
+                J->>DB: result.status = success
+            else retry exhausted
+                J->>DB: result.status = failed
+            end
+            J->>DB: increment counters
+        end
+        J->>DB: job.status = completed
+    end
+
+    W->>API: GET /api/jobs/{id}/results
+    API-->>W: rows with status badges
+    U->>W: Export CSV/XLSX
+    W->>API: GET /api/jobs/{id}/export
+    API-->>U: file download
+```
 
 ## Quick Start
 
@@ -386,6 +477,27 @@ The backend recognizes this signal and stores the row with `status="archived"`. 
 - can still be promoted to `success` by a manual edit if the user disagrees.
 
 The offline `MockLLMClient` implements this via a heuristic that catches ~91% of obvious garbage; the real Anthropic client routes archive cases via the prompt rule.
+
+### Result lifecycle
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending
+    pending --> running: job runner picks row
+    running --> success: valid JSON · schema OK
+    running --> failed: invalid after MAX_RETRIES
+    running --> archived: model returned<br/>{_unprocessable: true}
+
+    failed --> running: Retry failed button
+    archived --> success: manual edit<br/>(user disagrees)
+    failed --> success: manual edit
+    success --> success: manual edit<br/>(further refinement)
+
+    note right of archived
+        Not touched by Retry-failed.
+        Exports to separate XLSX sheet.
+    end note
+```
 
 ## Evaluation
 

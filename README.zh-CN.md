@@ -21,7 +21,11 @@
 [![Anthropic Claude][anthropic-shield]][anthropic-url]
 [![Docker][docker-shield]][docker-url]
 
-[它能做什么](#它能做什么30-秒看懂) · [快速开始](#快速开始) · [使用手册](#使用手册) · [FAQ](#faq) · [评测](#评测) · [English](./README.md)
+[它能做什么](#它能做什么30-秒看懂) · [架构](#架构) · [快速开始](#快速开始) · [使用手册](#使用手册) · [FAQ](#faq) · [评测](#评测) · [English](./README.md)
+
+<br/>
+
+<img src="./ai_pipeline_plot.png" alt="数据转换流程：左侧是凌乱的 Excel 表格，中间是 AI 处理环节，右侧是干净的结构化输出" width="100%">
 
 </div>
 
@@ -65,6 +69,93 @@ from     to        school              major                  scholar    is_work
 - **正在做作品集的人** —— 这个仓库故意按"成熟开源项目"的样子组织，不是教程。
 
 只要你会装 Docker Desktop 并能在终端跑一行命令，就能用这个工具。
+
+## 架构
+
+```mermaid
+flowchart LR
+    subgraph User
+        B[Browser]
+    end
+    subgraph Frontend["Next.js 14 Frontend · :3000"]
+        UI["Pages<br/>/ · /upload · /run<br/>/jobs/[id] · /results/[id]"]
+        API_LIB["lib/api.ts<br/>HTTP wrapper"]
+    end
+    subgraph Backend["FastAPI Backend · :8000"]
+        ROUTERS["Routers<br/>files · templates · jobs<br/>results · export · health"]
+        SERVICES["Services<br/>parser · prompt_builder<br/>validator · extractor<br/>job_runner · exporter"]
+        LLM{{LLM Client}}
+    end
+    subgraph Providers["LLM Providers"]
+        MOCK[MockLLMClient<br/>heuristic offline]
+        ANTHROPIC[Anthropic<br/>Claude Sonnet 4.6]
+    end
+    subgraph Storage["Local Storage"]
+        DB[(SQLite<br/>jobs · results<br/>templates · files)]
+        FS[(Filesystem<br/>uploads/ · exports/)]
+    end
+
+    B <--> UI
+    UI <--> API_LIB
+    API_LIB <-->|HTTP/JSON| ROUTERS
+    ROUTERS --> SERVICES
+    SERVICES --> LLM
+    LLM -.->|MODEL_PROVIDER=mock| MOCK
+    LLM -.->|MODEL_PROVIDER=anthropic| ANTHROPIC
+    SERVICES <--> DB
+    SERVICES <--> FS
+```
+
+### 一次抽取任务的时序
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant U as User
+    participant W as Next.js UI
+    participant API as FastAPI
+    participant J as Job Runner<br/>(thread)
+    participant L as LLM
+    participant DB as SQLite
+
+    U->>W: Upload Excel/CSV
+    W->>API: POST /api/files/upload
+    API->>DB: save file metadata
+    API-->>W: file_id + headers + preview
+    U->>W: Pick column, template, max_rows
+    W->>API: POST /api/jobs
+    API->>DB: create job (status=pending)
+    API->>J: spawn daemon thread
+    API-->>W: job_id
+
+    loop every 2s
+        W->>API: GET /api/jobs/{id}
+        API->>DB: read counters
+        API-->>W: progress, status
+    end
+
+    par background extraction
+        loop for each row (max_concurrency=3)
+            J->>L: prompt(template, input_text)
+            L-->>J: raw JSON
+            alt _unprocessable signal
+                J->>DB: result.status = archived
+            else valid output
+                J->>DB: result.status = success
+            else retry exhausted
+                J->>DB: result.status = failed
+            end
+            J->>DB: increment counters
+        end
+        J->>DB: job.status = completed
+    end
+
+    W->>API: GET /api/jobs/{id}/results
+    API-->>W: rows with status badges
+    U->>W: Export CSV/XLSX
+    W->>API: GET /api/jobs/{id}/export
+    API-->>U: file download
+```
 
 ## 快速开始
 
@@ -386,6 +477,27 @@ Prompt 里有一条 **Rule 0**：当输入不是记录时，模型返回
 - 用户如果不同意，可以手动编辑促进为 `success`。
 
 离线 `MockLLMClient` 通过启发式规则实现（捕获约 91% 的明显垃圾）；真实 Anthropic 客户端通过 prompt Rule 0 路由。
+
+### 结果状态机
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending
+    pending --> running: job runner picks row
+    running --> success: valid JSON · schema OK
+    running --> failed: invalid after MAX_RETRIES
+    running --> archived: model returned<br/>{_unprocessable: true}
+
+    failed --> running: Retry failed button
+    archived --> success: manual edit<br/>(user disagrees)
+    failed --> success: manual edit
+    success --> success: manual edit<br/>(further refinement)
+
+    note right of archived
+        Not touched by Retry-failed.
+        Exports to separate XLSX sheet.
+    end note
+```
 
 ## 评测
 
