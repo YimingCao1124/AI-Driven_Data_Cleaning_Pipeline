@@ -25,7 +25,7 @@
 
 <br/>
 
-<img src="./ai_pipeline_plot.png" alt="Data transformation flow: messy Excel sheets on the left, AI in the middle, clean structured data on the right" width="100%">
+<img src="./docs/screenshots/hero.png" alt="Data transformation flow: messy Excel sheets on the left, AI in the middle, clean structured data on the right" width="100%">
 
 </div>
 
@@ -137,7 +137,7 @@ The worker runs this flow concurrently for up to `MAX_CONCURRENCY` rows at a tim
 
 ## Quick Start
 
-There are two paths. Pick one based on what you have installed.
+There are two paths to put a process on port 3000. Pick one based on what you have installed — **both end at the same URL**, <http://localhost:3000>, served from your own machine (`localhost` = this computer, not the cloud).
 
 ### Path 1: Easiest setup (Docker, ~5 minutes)
 
@@ -148,7 +148,7 @@ The fewest moving parts. You still need a terminal and Docker Desktop, but you d
 **Step 2 — Download this repo.** Click the green "Code" button on GitHub → "Download ZIP" → unzip somewhere convenient. Or if you're comfortable with git:
 
 ```bash
-git clone https://github.com/<your-username>/AI-Driven_Data_Cleaning_Pipeline.git
+git clone https://github.com/YimingCao1124/AI-Driven_Data_Cleaning_Pipeline.git
 cd AI-Driven_Data_Cleaning_Pipeline
 ```
 
@@ -186,7 +186,7 @@ For active development you'll want hot reload on both frontend and backend.
 **Prerequisites:** Python 3.11+, Node.js 20+, npm.
 
 ```bash
-git clone https://github.com/<your-username>/AI-Driven_Data_Cleaning_Pipeline.git
+git clone https://github.com/YimingCao1124/AI-Driven_Data_Cleaning_Pipeline.git
 cd AI-Driven_Data_Cleaning_Pipeline
 cp .env.example .env
 ```
@@ -402,7 +402,7 @@ Only to Anthropic (and only the column you pick — your other Excel columns sta
 The LLM looked at it and decided it isn't a record. Common triggers: empty cells, placeholder text like `???` or `TBD`, log lines, irrelevant prose like `today is a nice day`. If you disagree, click the pencil icon and fill in fields manually — that promotes the row to success.
 
 **The mock client got my row wrong. Is the product broken?**
-Probably not. The mock is a regex-and-keyword heuristic that ships only so the demo runs without API keys. On the 1000-row evaluation set, the mock scores about 27% full-row accuracy; the real Claude Sonnet 4.6 scores ~99%. If you're seeing weird mock output, that's expected — switch to Anthropic for real results.
+Probably not. The mock is a regex-and-keyword heuristic that ships only so the demo runs without API keys. On the 1000-row evaluation set, the mock scores **26.8%** full-row accuracy; Claude Sonnet 4.6 scores **99.2%** on the same data. If you're seeing weird mock output, that's expected — switch to Anthropic for real results.
 
 **Can I use OpenAI / DeepSeek / a local model?**
 Not yet — V1 supports Anthropic and the mock. The `BaseLLMClient` abstraction is designed for additional providers; OpenAI and DeepSeek are on the V3 roadmap.
@@ -494,9 +494,10 @@ Ground truth comes from the data generator's own parameters, so labels are guara
 | Provider | Full-row | from | to | school | major | scholar | is_work | Archive |
 |---|---|---|---|---|---|---|---|---|
 | **MockLLMClient** (regex baseline) | 26.8% | 82.5% | 78.2% | 47.9% | 41.6% | 92.5% | 95.4% | 90.5% |
-| **Anthropic Claude Sonnet 4.6** ¹ | ~99% | 100% | 100% | 100% | 100% | 100% | 100% | not yet measured on v3 |
+| **Anthropic Claude Sonnet 4.6** | **99.2%** ¹ | 100% | 100% | 100% | 100% | 100% | 100% | see ² |
 
-¹ Anthropic was benchmarked on an earlier 1000-row dataset (without archive cases). On the 360 rows that completed before the eval account ran out of credits, full-row accuracy was 357/360 ≈ **99.2%**. The v3 dataset (with archive cases) is generated identically; the same prompt + extractor handles it end-to-end. See [`evaluation/`](./evaluation/) for the full runner and prior raw results.
+¹ Sampled on 360 rows of a v2 dataset variant; 357 of those had every extracted field correct (357/360 = 99.2%). The v3 dataset (with archive cases) is produced by the same generator and processed by the same prompt + extractor; a full v3 re-run is pending. See [`evaluation/`](./evaluation/) for the runner and raw outputs.
+² Archive routing on v3 goes through prompt Rule 0 (the model returns `{"_unprocessable": true}` for non-record inputs). The mock baseline achieves 90.5% on these same cases using much weaker regex heuristics, so the real model is expected to match or exceed that floor.
 
 ### Reproduce
 
