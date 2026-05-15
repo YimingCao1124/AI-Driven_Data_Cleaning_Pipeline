@@ -106,56 +106,34 @@ flowchart LR
     SERVICES <--> FS
 ```
 
-### Extraction flow
+### Per-row extraction flow
+
+What happens inside the worker for one row of input. The retry loop, the three terminal statuses, and the archive short-circuit are all here.
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    participant U as User
-    participant W as Next.js UI
-    participant API as FastAPI
-    participant J as Job Runner<br/>(thread)
-    participant L as LLM
-    participant DB as SQLite
+flowchart TD
+    Start([Row from input column]) --> Build[Build prompt<br/>template + input text<br/>+ previous error if retrying]
+    Build --> Call[Call LLM client<br/>Mock or Anthropic]
+    Call --> Check{Inspect raw output}
 
-    U->>W: Upload Excel/CSV
-    W->>API: POST /api/files/upload
-    API->>DB: save file metadata
-    API-->>W: file_id + headers + preview
-    U->>W: Pick column, template, max_rows
-    W->>API: POST /api/jobs
-    API->>DB: create job (status=pending)
-    API->>J: spawn daemon thread
-    API-->>W: job_id
+    Check -->|"{_unprocessable: true}"| Arch([status = archived])
+    Check -->|other JSON-like text| Parse[Strip code fences,<br/>parse JSON]
+    Parse --> Validate{Pydantic schema<br/>valid?}
 
-    loop every 2s
-        W->>API: GET /api/jobs/{id}
-        API->>DB: read counters
-        API-->>W: progress, status
-    end
+    Validate -->|yes| Ok([status = success])
+    Validate -->|no, or invalid JSON| Retry{Retries left?<br/>MAX_RETRIES default 2}
+    Retry -->|yes, feed error<br/>back into prompt| Build
+    Retry -->|no| Fail([status = failed])
 
-    par background extraction
-        loop for each row (max_concurrency=3)
-            J->>L: prompt(template, input_text)
-            L-->>J: raw JSON
-            alt _unprocessable signal
-                J->>DB: result.status = archived
-            else valid output
-                J->>DB: result.status = success
-            else retry exhausted
-                J->>DB: result.status = failed
-            end
-            J->>DB: increment counters
-        end
-        J->>DB: job.status = completed
-    end
+    Arch --> Counter[Increment job<br/>archived_count]
+    Ok --> Counter2[Increment job<br/>success_count]
+    Fail --> Counter3[Increment job<br/>failed_count]
 
-    W->>API: GET /api/jobs/{id}/results
-    API-->>W: rows with status badges
-    U->>W: Export CSV/XLSX
-    W->>API: GET /api/jobs/{id}/export
-    API-->>U: file download
+    classDef terminal fill:#e0e7ff,stroke:#4338ca,stroke-width:2px,color:#1e1b4b
+    class Arch,Ok,Fail terminal
 ```
+
+The worker runs this flow concurrently for up to `MAX_CONCURRENCY` rows at a time. Meanwhile the frontend polls `GET /api/jobs/{id}` every 2 s to render live counters; both run independently until all rows are processed and the job is marked `completed`.
 
 ## Quick Start
 
