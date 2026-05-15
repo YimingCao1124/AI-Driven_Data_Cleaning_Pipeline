@@ -1,0 +1,151 @@
+[
+  {"id": 1, "category": "nl-en-edu", "input": "I graduated from Stanford University in June 2019 with a Bachelor of Science in Computer Science, having started my studies in September 2015.",
+   "expected": {"from": "2015-09", "to": "2019-06", "school": "Stanford University", "major": "Computer Science", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 2, "category": "nl-en-edu", "input": "She is currently pursuing her PhD in Computer Vision at ETH Zurich, which she began in 2020.",
+   "expected": {"from": "2020", "to": "present", "school": "ETH Zurich", "major": "Computer Vision", "scholar": "PhD", "is_work_experience": false}},
+
+  {"id": 3, "category": "nl-en-edu", "input": "From September 2017 to May 2021, I attended the University of Toronto where I studied Mechanical Engineering and earned my Bachelor of Applied Science.",
+   "expected": {"from": "2017-09", "to": "2021-05", "school": "University of Toronto", "major": "Mechanical Engineering", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 4, "category": "nl-en-edu", "input": "Harvard University awarded him a B.A. in Economics in 2018; he had originally enrolled in 2014.",
+   "expected": {"from": "2014", "to": "2018", "school": "Harvard University", "major": "Economics", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 5, "category": "nl-en-edu", "input": "He spent four years at MIT, from 2016 to 2020, earning a BS in Electrical Engineering.",
+   "expected": {"from": "2016", "to": "2020", "school": "MIT", "major": "Electrical Engineering", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 6, "category": "nl-en-edu", "input": "After completing her Master of Science in Statistics at the University of Oxford in 2020, she moved into industry.",
+   "expected": {"from": null, "to": "2020", "school": "University of Oxford", "major": "Statistics", "scholar": "Master", "is_work_experience": false}},
+
+  {"id": 7, "category": "nl-zh-edu", "input": "我于2018年9月至2022年6月就读于北京大学，主修计算机科学与技术，获得学士学位。",
+   "expected": {"from": "2018-09", "to": "2022-06", "school": "北京大学", "major": "计算机科学与技术", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 8, "category": "nl-zh-edu", "input": "她是清华大学软件工程专业的硕士研究生，攻读时间是2020年9月到2023年7月。",
+   "expected": {"from": "2020-09", "to": "2023-07", "school": "清华大学", "major": "软件工程", "scholar": "Master", "is_work_experience": false}},
+
+  {"id": 9, "category": "nl-zh-edu", "input": "2014年至2018年，我在复旦大学攻读国际经济与贸易专业，并取得学士学位。",
+   "expected": {"from": "2014", "to": "2018", "school": "复旦大学", "major": "国际经济与贸易", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 10, "category": "nl-zh-edu", "input": "本人于2018年从浙江大学数学系毕业获得学士学位。",
+   "expected": {"from": null, "to": "2018", "school": "浙江大学", "major": "数学", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 11, "category": "nl-zh-edu", "input": "目前在中国科学院大学读博士，研究方向是计算机视觉，2019年入学。",
+   "expected": {"from": "2019", "to": "present", "school": "中国科学院大学", "major": "计算机视觉", "scholar": "PhD", "is_work_experience": false}},
+
+  {"id": 12, "category": "nl-zh-edu", "input": "他在南京大学读了四年本科，主修软件工程，时间是从2017年9月到2021年6月。",
+   "expected": {"from": "2017-09", "to": "2021-06", "school": "南京大学", "major": "软件工程", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 13, "category": "nl-en-work", "input": "I have been working at Google as a Senior Software Engineer on the search infrastructure team since June 2018.",
+   "expected": {"from": "2018-06", "to": "present", "school": "Google", "major": "Senior Software Engineer", "scholar": null, "is_work_experience": true}},
+
+  {"id": 14, "category": "nl-en-work", "input": "From July 2019 to August 2022, I worked at Meta as a Machine Learning Engineer focusing on recommendation systems.",
+   "expected": {"from": "2019-07", "to": "2022-08", "school": "Meta", "major": "Machine Learning Engineer", "scholar": null, "is_work_experience": true}},
+
+  {"id": 15, "category": "nl-en-work", "input": "Between 2020 and 2023 she served as a Senior Data Scientist at Amazon, primarily on the AWS team.",
+   "expected": {"from": "2020", "to": "2023", "school": "Amazon", "major": "Senior Data Scientist", "scholar": null, "is_work_experience": true}},
+
+  {"id": 16, "category": "nl-en-work", "input": "He spent four years at Microsoft, from 2017 to 2021, eventually rising to Principal Engineer on the Azure platform.",
+   "expected": {"from": "2017", "to": "2021", "school": "Microsoft", "major": "Principal Engineer", "scholar": null, "is_work_experience": true}},
+
+  {"id": 17, "category": "nl-en-work", "input": "Since March 2021, I have been a Research Engineer at OpenAI working on the alignment team.",
+   "expected": {"from": "2021-03", "to": "present", "school": "OpenAI", "major": "Research Engineer", "scholar": null, "is_work_experience": true}},
+
+  {"id": 18, "category": "nl-en-work", "input": "She joined Apple as an iOS Developer in May 2019 and left in November 2022 after working on the Photos team.",
+   "expected": {"from": "2019-05", "to": "2022-11", "school": "Apple", "major": "iOS Developer", "scholar": null, "is_work_experience": true}},
+
+  {"id": 19, "category": "nl-en-work", "input": "I interned at Stripe during the summer of 2022 as a Software Engineering Intern on the payments team.",
+   "expected": {"from": null, "to": null, "school": "Stripe", "major": "Software Engineering Intern", "scholar": null, "is_work_experience": true}},
+
+  {"id": 20, "category": "nl-zh-work", "input": "2021年7月起，我加入字节跳动担任数据科学家，主要负责推荐系统的离线特征建设。",
+   "expected": {"from": "2021-07", "to": "present", "school": "字节跳动", "major": "数据科学家", "scholar": null, "is_work_experience": true}},
+
+  {"id": 21, "category": "nl-zh-work", "input": "从2018年6月到2021年5月，我在阿里巴巴任职高级工程师，负责支付平台的开发。",
+   "expected": {"from": "2018-06", "to": "2021-05", "school": "阿里巴巴", "major": "高级工程师", "scholar": null, "is_work_experience": true}},
+
+  {"id": 22, "category": "nl-zh-work", "input": "她在腾讯担任产品经理的时间是2019年3月至2022年12月，参与了微信支付团队的工作。",
+   "expected": {"from": "2019-03", "to": "2022-12", "school": "腾讯", "major": "产品经理", "scholar": null, "is_work_experience": true}},
+
+  {"id": 23, "category": "nl-zh-work", "input": "2017年6月到2020年8月期间，我在美团担任后端开发工程师，主要做外卖业务。",
+   "expected": {"from": "2017-06", "to": "2020-08", "school": "美团", "major": "后端开发工程师", "scholar": null, "is_work_experience": true}},
+
+  {"id": 24, "category": "nl-zh-work", "input": "他自2022年3月起加入NVIDIA担任高级研究员，方向是深度学习。",
+   "expected": {"from": "2022-03", "to": "present", "school": "NVIDIA", "major": "高级研究员", "scholar": null, "is_work_experience": true}},
+
+  {"id": 25, "category": "nl-zh-work", "input": "2023年6月至9月，他在微软Azure部门做软件工程实习生。",
+   "expected": {"from": "2023-06", "to": "2023-09", "school": "微软", "major": "软件工程实习生", "scholar": null, "is_work_experience": true}},
+
+  {"id": 26, "category": "blob-en-edu", "input": "name:Alice|degree:BSc|school:Stanford|major:CS|time:2015-2019",
+   "expected": {"from": "2015", "to": "2019", "school": "Stanford", "major": "CS", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 27, "category": "blob-en-edu", "input": "Edu//MIT//EE//BS//2016-2020",
+   "expected": {"from": "2016", "to": "2020", "school": "MIT", "major": "EE", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 28, "category": "blob-en-edu", "input": "[education] school=Harvard major=Economics degree=BA from=2014 to=2018",
+   "expected": {"from": "2014", "to": "2018", "school": "Harvard", "major": "Economics", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 29, "category": "blob-en-edu", "input": "EDU>>>Cambridge|Biology|PhD|2017-2022",
+   "expected": {"from": "2017", "to": "2022", "school": "Cambridge", "major": "Biology", "scholar": "PhD", "is_work_experience": false}},
+
+  {"id": 30, "category": "blob-en-edu", "input": "school::ETH Zurich;;major::Computer Vision;;degree::PhD;;time::2020-now",
+   "expected": {"from": "2020", "to": "present", "school": "ETH Zurich", "major": "Computer Vision", "scholar": "PhD", "is_work_experience": false}},
+
+  {"id": 31, "category": "blob-en-edu", "input": "<<edu>> Toronto >> MechEng >> BASc >> 2017/9-2021/5",
+   "expected": {"from": "2017-09", "to": "2021-05", "school": "Toronto", "major": "MechEng", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 32, "category": "blob-zh-edu", "input": "学校:清华;专业:软件工程;学历:硕士;时间:2020.9-2023.7",
+   "expected": {"from": "2020-09", "to": "2023-07", "school": "清华", "major": "软件工程", "scholar": "Master", "is_work_experience": false}},
+
+  {"id": 33, "category": "blob-zh-edu", "input": "[教育] 北京大学||计算机||本科||2018年9月-2022年6月",
+   "expected": {"from": "2018-09", "to": "2022-06", "school": "北京大学", "major": "计算机", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 34, "category": "blob-zh-edu", "input": "edu/北大/数学/学士/2014-2018",
+   "expected": {"from": "2014", "to": "2018", "school": "北大", "major": "数学", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 35, "category": "blob-zh-edu", "input": "教育经历＞＞复旦大学＞＞经济学＞＞2014-2018＞＞学士",
+   "expected": {"from": "2014", "to": "2018", "school": "复旦大学", "major": "经济学", "scholar": "Bachelor", "is_work_experience": false}},
+
+  {"id": 36, "category": "blob-zh-edu", "input": "学校：浙大／专业：CS／学位：MS／时间：2020-2023",
+   "expected": {"from": "2020", "to": "2023", "school": "浙大", "major": "CS", "scholar": "Master", "is_work_experience": false}},
+
+  {"id": 37, "category": "blob-zh-edu", "input": "Edu｜中科院｜AI｜博士｜2019-至今",
+   "expected": {"from": "2019", "to": "present", "school": "中科院", "major": "AI", "scholar": "PhD", "is_work_experience": false}},
+
+  {"id": 38, "category": "blob-en-work", "input": "exp:Google_SeniorSWE_2018.6-present_search_infra",
+   "expected": {"from": "2018-06", "to": "present", "school": "Google", "major": "SeniorSWE", "scholar": null, "is_work_experience": true}},
+
+  {"id": 39, "category": "blob-en-work", "input": "job#1|Tencent|PM|2019/3-2022/12|WeChatPay",
+   "expected": {"from": "2019-03", "to": "2022-12", "school": "Tencent", "major": "PM", "scholar": null, "is_work_experience": true}},
+
+  {"id": 40, "category": "blob-en-work", "input": "WORK[Microsoft][2017-2021][Principal Engineer][Azure]",
+   "expected": {"from": "2017", "to": "2021", "school": "Microsoft", "major": "Principal Engineer", "scholar": null, "is_work_experience": true}},
+
+  {"id": 41, "category": "blob-en-work", "input": "[work] company=Meta role=ML_Engineer from=2019-07 to=2022-08 team=recsys",
+   "expected": {"from": "2019-07", "to": "2022-08", "school": "Meta", "major": "ML_Engineer", "scholar": null, "is_work_experience": true}},
+
+  {"id": 42, "category": "blob-en-work", "input": "career::Amazon||Senior Data Scientist||2020-2023||AWS",
+   "expected": {"from": "2020", "to": "2023", "school": "Amazon", "major": "Senior Data Scientist", "scholar": null, "is_work_experience": true}},
+
+  {"id": 43, "category": "blob-en-work", "input": "OpenAI/ResearchEngineer/2021.03-now/alignment",
+   "expected": {"from": "2021-03", "to": "present", "school": "OpenAI", "major": "ResearchEngineer", "scholar": null, "is_work_experience": true}},
+
+  {"id": 44, "category": "blob-en-work", "input": "Stripe // SWE intern // Summer 2022 // payments",
+   "expected": {"from": null, "to": null, "school": "Stripe", "major": "SWE intern", "scholar": null, "is_work_experience": true}},
+
+  {"id": 45, "category": "blob-zh-work", "input": "工作｜2021.07-至今｜字节｜数据科学家｜推荐系统",
+   "expected": {"from": "2021-07", "to": "present", "school": "字节", "major": "数据科学家", "scholar": null, "is_work_experience": true}},
+
+  {"id": 46, "category": "blob-zh-work", "input": "公司:阿里巴巴 职位:高级工程师 时间:2018.6-2021.5 部门:支付平台",
+   "expected": {"from": "2018-06", "to": "2021-05", "school": "阿里巴巴", "major": "高级工程师", "scholar": null, "is_work_experience": true}},
+
+  {"id": 47, "category": "blob-zh-work", "input": "[work] 腾讯::产品经理::2019-2022::微信支付",
+   "expected": {"from": "2019", "to": "2022", "school": "腾讯", "major": "产品经理", "scholar": null, "is_work_experience": true}},
+
+  {"id": 48, "category": "blob-zh-work", "input": "career→美团→后端开发工程师→2017.6-2020.8→外卖业务",
+   "expected": {"from": "2017-06", "to": "2020-08", "school": "美团", "major": "后端开发工程师", "scholar": null, "is_work_experience": true}},
+
+  {"id": 49, "category": "blob-zh-work", "input": "工作经历＞＞百度＞＞算法工程师＞＞2020-2023＞＞搜索广告",
+   "expected": {"from": "2020", "to": "2023", "school": "百度", "major": "算法工程师", "scholar": null, "is_work_experience": true}},
+
+  {"id": 50, "category": "blob-zh-work", "input": "exp|NVIDIA|高级研究员|2022.3-now|deep learning",
+   "expected": {"from": "2022-03", "to": "present", "school": "NVIDIA", "major": "高级研究员", "scholar": null, "is_work_experience": true}}
+]

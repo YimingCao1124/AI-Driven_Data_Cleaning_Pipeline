@@ -37,7 +37,9 @@ export interface FileUploadResponse {
   filename: string;
   file_type: string;
   headers: string[];
-  preview_rows: Record<string, string>[];
+  // The backend coerces every cell to string, but typing this as `unknown`
+  // avoids lying if a future parser path returns numbers / booleans.
+  preview_rows: Record<string, unknown>[];
   total_rows: number;
   created_at: string;
 }
@@ -53,6 +55,7 @@ export interface JobResponse {
   processed_count: number;
   success_count: number;
   failed_count: number;
+  archived_count: number;
   progress_percent: number;
   created_at: string;
   updated_at: string;
@@ -66,9 +69,11 @@ export interface ResultResponse {
   output: Record<string, unknown>;
   raw_model_output: string;
   validation_status: string;
-  validation_errors: Array<{ loc: (string | number)[]; msg: string }>;
+  // Pydantic emits {loc, msg, ...}; the enum validator emits {loc, msg};
+  // tolerate any extra shape with an index signature.
+  validation_errors: Array<{ loc?: (string | number)[]; msg?: string; [k: string]: unknown }>;
   retry_count: number;
-  status: "success" | "failed";
+  status: "success" | "failed" | "archived";
   created_at: string;
   updated_at: string;
 }

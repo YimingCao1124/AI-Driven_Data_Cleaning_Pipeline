@@ -157,7 +157,12 @@ function RunPageInner() {
             min={1}
             max={10000}
             value={maxRows}
-            onChange={(e) => setMaxRows(Number(e.target.value))}
+            onChange={(e) => {
+              const raw = Number(e.target.value);
+              const clamped =
+                Number.isFinite(raw) && raw > 0 ? Math.min(10000, Math.floor(raw)) : 1;
+              setMaxRows(clamped);
+            }}
           />
         </div>
 

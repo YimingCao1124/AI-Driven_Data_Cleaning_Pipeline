@@ -45,11 +45,21 @@ def test_mock_parses_embedded_json(education_template, app_module) -> None:
     assert data["scholar"] == "MS"
 
 
-def test_factory_rejects_real_providers(app_module) -> None:
+def test_factory_rejects_unimplemented_providers(app_module) -> None:
     import pytest
     from app.services.llm_client import get_llm_client
 
     with pytest.raises(NotImplementedError):
         get_llm_client("openai")
     with pytest.raises(NotImplementedError):
+        get_llm_client("deepseek")
+
+
+def test_factory_anthropic_requires_api_key(app_module, monkeypatch) -> None:
+    """Anthropic is implemented but requires ANTHROPIC_API_KEY at construction."""
+    import pytest
+    from app.services.llm_client import get_llm_client
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    with pytest.raises(RuntimeError, match="ANTHROPIC_API_KEY"):
         get_llm_client("anthropic")

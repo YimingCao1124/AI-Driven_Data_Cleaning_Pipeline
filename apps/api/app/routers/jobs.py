@@ -57,6 +57,11 @@ def create_job(payload: JobCreateRequest, db: Session = Depends(get_db)) -> JobR
             detail=f"input_column '{payload.input_column}' is not a header of file {file.id}. "
                    f"Available: {headers}",
         )
+    if file.total_rows <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail=f"file {file.id} has no data rows to extract from",
+        )
 
     job = ExtractionJob(
         file_id=payload.file_id,
@@ -82,11 +87,19 @@ def get_job(job_id: int, db: Session = Depends(get_db)) -> JobResponse:
     return JobResponse.from_model(job)
 
 
-@router.post("/{job_id}/retry-failed", response_model=JobResponse)
+@router.post("/{job_id}/retry-failed", response_model=JobResponse, status_code=202)
 def retry_failed_endpoint(job_id: int, db: Session = Depends(get_db)) -> JobResponse:
     job = db.query(ExtractionJob).get(job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="job not found")
+    if job.failed_count == 0:
+        # Nothing to retry — return current snapshot unchanged.
+        return JobResponse.from_model(job)
+    # Flip to running synchronously so the response reflects the new state
+    # and the frontend keeps polling until the background thread finishes.
+    job.status = "running"
+    db.commit()
+    db.refresh(job)
     retry_failed(job_id)
     return JobResponse.from_model(job)
 
@@ -94,7 +107,7 @@ def retry_failed_endpoint(job_id: int, db: Session = Depends(get_db)) -> JobResp
 @router.get("/{job_id}/results", response_model=List[ResultResponse])
 def get_results(
     job_id: int,
-    status_filter: Literal["all", "success", "failed"] = Query(default="all", alias="status"),
+    status_filter: Literal["all", "success", "failed", "archived"] = Query(default="all", alias="status"),
     limit: int = Query(default=500, ge=1, le=10000),
     offset: int = Query(default=0, ge=0),
     db: Session = Depends(get_db),

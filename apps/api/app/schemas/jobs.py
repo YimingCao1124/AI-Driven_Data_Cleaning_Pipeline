@@ -24,6 +24,7 @@ class JobResponse(BaseModel):
     processed_count: int
     success_count: int
     failed_count: int
+    archived_count: int
     progress_percent: float
     created_at: datetime
     updated_at: datetime
@@ -42,6 +43,7 @@ class JobResponse(BaseModel):
             processed_count=job.processed_count,
             success_count=job.success_count,
             failed_count=job.failed_count,
+            archived_count=getattr(job, "archived_count", 0) or 0,
             progress_percent=round(pct, 2),
             created_at=job.created_at,
             updated_at=job.updated_at,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 import {
@@ -18,20 +19,25 @@ import type {
 import EditResultDialog from "@/components/EditResultDialog";
 import { Download, Loader2, Pencil, RefreshCw } from "lucide-react";
 
-type Filter = "all" | "success" | "failed";
+type Filter = "all" | "success" | "failed" | "archived";
+
+const TERMINAL_STATES: ReadonlyArray<JobResponse["status"]> = ["completed", "failed"];
 
 export default function ResultsPage() {
   const params = useParams<{ jobId: string }>();
   const jobId = Number(params.jobId);
+  const validId = Number.isFinite(jobId);
 
   const [filter, setFilter] = useState<Filter>("all");
   const [editing, setEditing] = useState<ResultResponse | null>(null);
   const [retrying, setRetrying] = useState(false);
 
   const { data: job, mutate: refetchJob } = useSWR<JobResponse>(
-    Number.isFinite(jobId) ? ["job-summary", jobId] : null,
+    validId ? ["job-summary", jobId] : null,
     () => getJob(jobId),
-    { refreshInterval: 4000 }
+    {
+      refreshInterval: (d) => (d && TERMINAL_STATES.includes(d.status) ? 0 : 4000),
+    }
   );
 
   const { data: template } = useSWR<TemplateResponse>(
@@ -43,16 +49,19 @@ export default function ResultsPage() {
     data: results,
     mutate: refetchResults,
   } = useSWR<ResultResponse[]>(
-    Number.isFinite(jobId) ? ["results", jobId, filter] : null,
+    validId ? ["results", jobId, filter] : null,
     () => getJobResults(jobId, filter),
-    { refreshInterval: 4000 }
+    {
+      refreshInterval: () =>
+        job && TERMINAL_STATES.includes(job.status) ? 0 : 4000,
+    }
   );
 
   useEffect(() => {
-    if (job?.status === "completed") {
+    if (job && TERMINAL_STATES.includes(job.status)) {
       refetchResults();
     }
-  }, [job?.status, refetchResults]);
+  }, [job, refetchResults]);
 
   const fieldNames = useMemo(
     () => (template?.fields ?? []).map((f) => f.name),
@@ -63,12 +72,30 @@ export default function ResultsPage() {
     setRetrying(true);
     try {
       await retryFailed(jobId);
-      // poll a couple of times for the retry thread to finish
-      await new Promise((r) => setTimeout(r, 1500));
-      await Promise.all([refetchJob(), refetchResults()]);
+      // Switch to "all" so newly-succeeded rows are visible to the user.
+      setFilter("all");
+      // Poll the job until it leaves the running state (or up to ~30 s).
+      for (let i = 0; i < 60; i++) {
+        await new Promise((r) => setTimeout(r, 500));
+        const next = await refetchJob();
+        if (next && TERMINAL_STATES.includes(next.status)) break;
+      }
+      await refetchResults();
     } finally {
       setRetrying(false);
     }
+  }
+
+  if (!validId) {
+    return (
+      <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        Invalid job id.{" "}
+        <Link href="/upload" className="underline">
+          Start a new extraction
+        </Link>
+        .
+      </div>
+    );
   }
 
   if (!job) {
@@ -79,6 +106,8 @@ export default function ResultsPage() {
     );
   }
 
+  const columnCount = fieldNames.length + 4;
+
   return (
     <div className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -88,16 +117,21 @@ export default function ResultsPage() {
           </h1>
           <p className="text-sm text-slate-600">
             Job #{job.id} · {job.success_count}/{job.total_count} success ·{" "}
-            {job.failed_count} failed
+            {job.failed_count} failed · {job.archived_count} archived
           </p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={handleRetry}
             disabled={retrying || job.failed_count === 0}
+            title={job.failed_count === 0 ? "No failed rows to retry" : ""}
             className="btn-secondary"
           >
-            {retrying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+            {retrying ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
             Retry failed
           </button>
           <a className="btn-secondary" href={exportUrl(jobId, "csv")}>
@@ -109,18 +143,20 @@ export default function ResultsPage() {
         </div>
       </header>
 
-      <div className="flex gap-2">
-        {(["all", "success", "failed"] as Filter[]).map((f) => (
+      <div className="flex flex-wrap gap-2">
+        {(["all", "success", "failed", "archived"] as Filter[]).map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={
-              filter === f
-                ? "btn-primary"
-                : "btn-secondary"
-            }
+            className={filter === f ? "btn-primary" : "btn-secondary"}
           >
-            {f === "all" ? "All" : f === "success" ? "Success" : "Failed"}
+            {f === "all"
+              ? `All (${job.processed_count})`
+              : f === "success"
+              ? `Success (${job.success_count})`
+              : f === "failed"
+              ? `Failed (${job.failed_count})`
+              : `Archived (${job.archived_count})`}
           </button>
         ))}
       </div>
@@ -131,8 +167,8 @@ export default function ResultsPage() {
             <tr>
               <th>#</th>
               <th>Input text</th>
-              {fieldNames.map((name) => (
-                <th key={name}>{name}</th>
+              {fieldNames.map((name, idx) => (
+                <th key={idx}>{name}</th>
               ))}
               <th>Status</th>
               <th />
@@ -145,24 +181,32 @@ export default function ResultsPage() {
                 <td className="max-w-[320px] whitespace-pre-wrap break-words text-slate-700">
                   {r.input_text}
                 </td>
-                {fieldNames.map((name) => {
+                {fieldNames.map((name, idx) => {
                   const v = r.output[name];
                   let display: string;
                   if (v === null || v === undefined || v === "") display = "—";
                   else if (typeof v === "boolean") display = v ? "true" : "false";
                   else display = String(v);
                   return (
-                    <td key={name} className="text-slate-800">
+                    <td key={idx} className="text-slate-800">
                       {display}
                     </td>
                   );
                 })}
                 <td>
                   <span
-                    className={r.status === "success" ? "badge-success" : "badge-failed"}
+                    className={
+                      r.status === "success"
+                        ? "badge-success"
+                        : r.status === "archived"
+                        ? "badge-archived"
+                        : "badge-failed"
+                    }
                     title={
-                      r.status === "failed"
-                        ? r.validation_errors.map((e) => e.msg).join("; ")
+                      r.status !== "success"
+                        ? r.validation_errors
+                            .map((e) => e.msg ?? JSON.stringify(e))
+                            .join("; ")
                         : ""
                     }
                   >
@@ -172,6 +216,7 @@ export default function ResultsPage() {
                 <td>
                   <button
                     onClick={() => setEditing(r)}
+                    aria-label="Edit result"
                     className="rounded p-1 text-slate-500 hover:bg-slate-100"
                   >
                     <Pencil className="h-4 w-4" />
@@ -181,7 +226,10 @@ export default function ResultsPage() {
             ))}
             {(!results || results.length === 0) && (
               <tr>
-                <td colSpan={fieldNames.length + 4} className="py-8 text-center text-slate-400">
+                <td
+                  colSpan={columnCount}
+                  className="py-8 text-center text-slate-400"
+                >
                   {job.status === "running" ? "Job still running…" : "No results."}
                 </td>
               </tr>

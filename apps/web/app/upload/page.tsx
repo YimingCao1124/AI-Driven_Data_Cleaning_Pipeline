@@ -13,7 +13,8 @@ export default function UploadPage() {
   const [error, setError] = useState<string | null>(null);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0];
+    const input = e.target;
+    const f = input.files?.[0];
     if (!f) return;
     setUploading(true);
     setError(null);
@@ -25,6 +26,8 @@ export default function UploadPage() {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
       setUploading(false);
+      // Reset so re-selecting the same file fires onChange again.
+      input.value = "";
     }
   }
 

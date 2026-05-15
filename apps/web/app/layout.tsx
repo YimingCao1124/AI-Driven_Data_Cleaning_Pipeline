@@ -18,10 +18,8 @@ export default function RootLayout({
         <main className="mx-auto max-w-6xl px-6 py-10">{children}</main>
         <footer className="mx-auto max-w-6xl px-6 pb-10 text-xs text-slate-500">
           <p>
-            AI Data Extraction Studio — V1 MVP. MockLLMClient mode. See{" "}
-            <a className="underline" href="https://github.com/" target="_blank" rel="noreferrer">
-              README
-            </a>{" "}
+            AI Data Extraction Studio — V1 MVP. MockLLMClient mode. See the
+            project&apos;s <code className="rounded bg-slate-100 px-1 py-0.5">README.md</code>{" "}
             for scope and roadmap.
           </p>
         </footer>

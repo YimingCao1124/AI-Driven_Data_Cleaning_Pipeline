@@ -10,21 +10,24 @@ export default function ProgressCard({ job }: { job: JobResponse }) {
             Status: <StatusBadge status={job.status} />
           </p>
         </div>
-        <div className="text-3xl font-bold text-brand-600">{job.progress_percent}%</div>
+        <div className="text-3xl font-bold text-brand-600">
+          {Math.round(job.progress_percent)}%
+        </div>
       </div>
 
       <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
         <div
           className="h-full bg-brand-600 transition-all"
-          style={{ width: `${job.progress_percent}%` }}
+          style={{ width: `${Math.min(100, Math.max(0, job.progress_percent))}%` }}
         />
       </div>
 
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <Counter label="Total" value={job.total_count} />
         <Counter label="Processed" value={job.processed_count} />
         <Counter label="Success" value={job.success_count} accent="text-emerald-600" />
         <Counter label="Failed" value={job.failed_count} accent="text-red-600" />
+        <Counter label="Archived" value={job.archived_count} accent="text-slate-500" />
       </div>
     </div>
   );

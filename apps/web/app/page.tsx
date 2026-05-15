@@ -22,14 +22,6 @@ export default function LandingPage() {
             <Link href="/upload" className="btn-primary">
               Start Extraction <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
-            <a
-              className="btn-secondary"
-              href="https://github.com/"
-              target="_blank"
-              rel="noreferrer"
-            >
-              View README
-            </a>
           </div>
           <p className="mt-3 text-xs text-slate-500">
             Bundled sample file:{" "}

@@ -36,13 +36,32 @@ async def upload_file(file: UploadFile = File(...), db: Session = Depends(get_db
     if not is_within(dest, settings.upload_path):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid upload path")
 
-    data = await file.read()
-    if len(data) > settings.max_upload_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=f"File exceeds {settings.max_upload_bytes // (1024 * 1024)} MB limit",
-        )
-    dest.write_bytes(data)
+    # Stream the upload in chunks and reject as soon as the running total
+    # exceeds the configured cap. Avoids loading multi-GB bodies into RAM.
+    chunk_size = 1024 * 1024  # 1 MB
+    written = 0
+    try:
+        with dest.open("wb") as out:
+            while True:
+                chunk = await file.read(chunk_size)
+                if not chunk:
+                    break
+                written += len(chunk)
+                if written > settings.max_upload_bytes:
+                    out.close()
+                    dest.unlink(missing_ok=True)
+                    raise HTTPException(
+                        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        detail=(
+                            f"File exceeds {settings.max_upload_bytes // (1024 * 1024)} MB limit"
+                        ),
+                    )
+                out.write(chunk)
+    except HTTPException:
+        raise
+    except Exception:
+        dest.unlink(missing_ok=True)
+        raise
 
     try:
         parsed = parse_table(dest, ext.lstrip("."))

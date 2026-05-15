@@ -50,6 +50,12 @@ def _persist_result(
     *,
     existing: Optional[ExtractionResult] = None,
 ) -> ExtractionResult:
+    # Stamp the archive reason into validation_errors so it surfaces in the UI.
+    validation_errors = list(outcome.validation_errors)
+    if outcome.status == "archived" and outcome.archive_reason:
+        validation_errors = [{"loc": [], "msg": outcome.archive_reason, "code": "archived"}]
+    errors_json = json.dumps(validation_errors, ensure_ascii=False)
+
     if existing is None:
         result = ExtractionResult(
             job_id=job.id,
@@ -58,9 +64,9 @@ def _persist_result(
             output_json=json.dumps(outcome.output, ensure_ascii=False),
             raw_model_output=outcome.raw_model_output,
             validation_status=outcome.validation_status,
-            validation_errors_json=json.dumps(outcome.validation_errors, ensure_ascii=False),
+            validation_errors_json=errors_json,
             retry_count=outcome.retry_count,
-            status="success" if outcome.success else "failed",
+            status=outcome.status,
         )
         db.add(result)
     else:
@@ -69,9 +75,9 @@ def _persist_result(
         result.output_json = json.dumps(outcome.output, ensure_ascii=False)
         result.raw_model_output = outcome.raw_model_output
         result.validation_status = outcome.validation_status
-        result.validation_errors_json = json.dumps(outcome.validation_errors, ensure_ascii=False)
+        result.validation_errors_json = errors_json
         result.retry_count = outcome.retry_count
-        result.status = "success" if outcome.success else "failed"
+        result.status = outcome.status
     return result
 
 
@@ -83,7 +89,13 @@ def _process_rows(
     rows: List[Dict[str, Any]],
     input_column: str,
 ) -> None:
-    llm = get_llm_client(settings.model_provider)
+    llm_kwargs: Dict[str, Any] = {}
+    if settings.model_provider == "anthropic":
+        llm_kwargs = {
+            "model": settings.anthropic_model,
+            "temperature": settings.temperature,
+        }
+    llm = get_llm_client(settings.model_provider, **llm_kwargs)
 
     def _work(item):
         idx, row = item
@@ -95,8 +107,10 @@ def _process_rows(
         for idx, text, outcome in pool.map(_work, enumerate(rows)):
             _persist_result(db, job, idx, text, outcome)
             job.processed_count += 1
-            if outcome.success:
+            if outcome.status == "success":
                 job.success_count += 1
+            elif outcome.status == "archived":
+                job.archived_count += 1
             else:
                 job.failed_count += 1
             # Commit per-row so the frontend polling sees progress.
@@ -165,7 +179,13 @@ def retry_failed(job_id: int) -> threading.Thread:
             if file is None:
                 return
             template = _load_template(db, job.template_id)
-            llm = get_llm_client(settings.model_provider)
+            llm_kwargs: Dict[str, Any] = {}
+            if settings.model_provider == "anthropic":
+                llm_kwargs = {
+                    "model": settings.anthropic_model,
+                    "temperature": settings.temperature,
+                }
+            llm = get_llm_client(settings.model_provider, **llm_kwargs)
 
             failed = (
                 db.query(ExtractionResult)
@@ -189,9 +209,14 @@ def retry_failed(job_id: int) -> threading.Thread:
                 outcome = extract_row(text, template, llm, max_retries=settings.max_retries)
                 before_status = result.status
                 _persist_result(db, job, idx, text, outcome, existing=result)
-                if outcome.success and before_status == "failed":
-                    job.success_count += 1
-                    job.failed_count = max(0, job.failed_count - 1)
+                # Update job counters based on status transitions.
+                if before_status == "failed":
+                    if outcome.status == "success":
+                        job.success_count += 1
+                        job.failed_count = max(0, job.failed_count - 1)
+                    elif outcome.status == "archived":
+                        job.archived_count += 1
+                        job.failed_count = max(0, job.failed_count - 1)
                 db.commit()
 
             job.status = "completed"

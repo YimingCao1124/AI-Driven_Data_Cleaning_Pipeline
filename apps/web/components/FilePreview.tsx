@@ -9,17 +9,17 @@ export default function FilePreview({ file }: { file: FileUploadResponse }) {
       <table className="data-table">
         <thead>
           <tr>
-            {file.headers.map((h) => (
-              <th key={h}>{h}</th>
+            {file.headers.map((h, idx) => (
+              <th key={idx}>{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {file.preview_rows.map((row, idx) => (
-            <tr key={idx}>
-              {file.headers.map((h) => (
-                <td key={h} className="max-w-[420px] whitespace-pre-wrap break-words">
-                  {String(row[h] ?? "")}
+          {file.preview_rows.map((row, rowIdx) => (
+            <tr key={rowIdx}>
+              {file.headers.map((h, colIdx) => (
+                <td key={colIdx} className="max-w-[420px] whitespace-pre-wrap break-words">
+                  {row[h] === null || row[h] === undefined ? "" : String(row[h])}
                 </td>
               ))}
             </tr>

@@ -28,6 +28,7 @@ class Settings(BaseSettings):
 
     openai_api_key: str = ""
     anthropic_api_key: str = ""
+    anthropic_model: str = "claude-sonnet-4-6"
 
     max_upload_bytes: int = 25 * 1024 * 1024
     allowed_upload_extensions: List[str] = Field(default_factory=lambda: [".xlsx", ".csv"])

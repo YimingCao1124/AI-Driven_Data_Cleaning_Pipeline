@@ -59,6 +59,10 @@ body {
   @apply badge bg-red-100 text-red-700;
 }
 
+.badge-archived {
+  @apply badge bg-slate-200 text-slate-700;
+}
+
 .badge-pending {
   @apply badge bg-slate-100 text-slate-700;
 }

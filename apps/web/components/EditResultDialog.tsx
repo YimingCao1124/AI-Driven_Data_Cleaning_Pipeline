@@ -14,6 +14,7 @@ interface Props {
 
 export default function EditResultDialog({ result, template, onClose, onSaved }: Props) {
   const [values, setValues] = useState<Record<string, string>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,18 +32,56 @@ export default function EditResultDialog({ result, template, onClose, onSaved }:
       }
     }
     setValues(initial);
+    setFieldErrors({});
     setError(null);
   }, [result, template]);
 
+  // Esc key closes the dialog.
+  useEffect(() => {
+    if (!result) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [result, onClose]);
+
   if (!result || !template) return null;
 
+  function validate(fields: FieldDefinition[]): Record<string, string> {
+    const errs: Record<string, string> = {};
+    for (const f of fields) {
+      const raw = values[f.name] ?? "";
+      if (raw === "") {
+        if (f.required) errs[f.name] = "required";
+        continue;
+      }
+      if (f.type === "integer") {
+        if (!/^-?\d+$/.test(raw)) errs[f.name] = "must be an integer";
+      } else if (f.type === "float") {
+        if (!Number.isFinite(Number(raw))) errs[f.name] = "must be a number";
+      } else if (f.type === "boolean") {
+        if (raw !== "true" && raw !== "false") errs[f.name] = "must be true or false";
+      } else if (f.type === "enum" && f.enum_options && !f.enum_options.includes(raw)) {
+        errs[f.name] = `must be one of: ${f.enum_options.join(", ")}`;
+      }
+    }
+    return errs;
+  }
+
   async function handleSave() {
-    if (!result) return;
+    if (!result || !template) return;
+    const errs = validate(template.fields);
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      setError("Please fix the highlighted fields.");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       const output: Record<string, unknown> = {};
-      for (const f of template?.fields ?? []) {
+      for (const f of template.fields) {
         const raw = values[f.name];
         if (raw === "" || raw === undefined) {
           output[f.name] = null;
@@ -61,11 +100,23 @@ export default function EditResultDialog({ result, template, onClose, onSaved }:
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
-      <div className="w-full max-w-2xl rounded-lg bg-white shadow-xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4"
+      role="dialog"
+      aria-modal="true"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-2xl rounded-lg bg-white shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between border-b px-5 py-3">
           <h2 className="font-semibold text-slate-800">Edit result #{result.id}</h2>
-          <button onClick={onClose} className="rounded p-1 hover:bg-slate-100">
+          <button
+            onClick={onClose}
+            aria-label="Close dialog"
+            className="rounded p-1 hover:bg-slate-100"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -79,28 +130,53 @@ export default function EditResultDialog({ result, template, onClose, onSaved }:
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
-            {(template?.fields ?? []).map((f) => (
+            {template.fields.map((f) => (
               <div key={f.name}>
                 <label className="block text-sm font-medium text-slate-700">
                   {f.name}{" "}
                   <span className="text-xs font-normal text-slate-400">({f.type})</span>
+                  {f.required && (
+                    <span className="ml-1 text-xs text-red-600">*</span>
+                  )}
                 </label>
                 {f.type === "boolean" ? (
                   <select
                     className="select"
                     value={values[f.name] ?? ""}
-                    onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
+                    onChange={(e) =>
+                      setValues((v) => ({ ...v, [f.name]: e.target.value }))
+                    }
                   >
                     <option value="">—</option>
                     <option value="true">true</option>
                     <option value="false">false</option>
                   </select>
+                ) : f.type === "enum" && f.enum_options ? (
+                  <select
+                    className="select"
+                    value={values[f.name] ?? ""}
+                    onChange={(e) =>
+                      setValues((v) => ({ ...v, [f.name]: e.target.value }))
+                    }
+                  >
+                    <option value="">—</option>
+                    {f.enum_options.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
                 ) : (
                   <input
                     className="input"
                     value={values[f.name] ?? ""}
-                    onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
+                    onChange={(e) =>
+                      setValues((v) => ({ ...v, [f.name]: e.target.value }))
+                    }
                   />
+                )}
+                {fieldErrors[f.name] && (
+                  <p className="mt-1 text-xs text-red-600">{fieldErrors[f.name]}</p>
                 )}
               </div>
             ))}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Sparkles } from "lucide-react";
+import { API_BASE } from "@/lib/api";
 
 export default function Header() {
   return (
@@ -21,7 +22,7 @@ export default function Header() {
           </Link>
           <a
             className="text-slate-600 hover:text-slate-900"
-            href="http://localhost:8000/docs"
+            href={`${API_BASE}/docs`}
             target="_blank"
             rel="noreferrer"
           >
