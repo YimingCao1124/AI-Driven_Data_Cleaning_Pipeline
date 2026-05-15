@@ -1,0 +1,11 @@
+id,name,experience
+1,张伟,2018年9月-2022年6月 北京大学 计算机科学与技术 本科
+2,Alice Johnson,"2015/09 - 2019/06, Stanford University, Computer Science, BSc"
+3,李娜,2020.09~2023.07 清华大学 软件工程 硕士研究生
+4,Bob Smith,"{""from"":""2019"",""to"":""2023"",""school"":""MIT"",""major"":""Electrical Engineering"",""degree"":""MS""}"
+5,王芳,2014/9-2018/7 复旦大学 国际经济与贸易 学士学位
+6,Carlos Rivera,"Sept 2017 to May 2021 — University of Toronto, Mechanical Engineering, Bachelor of Applied Science"
+7,陈强,2021年7月至今 字节跳动 数据科学家 负责推荐系统离线特征建设
+8,Diana Lee,"June 2018 - present, Google, Senior Software Engineer, search infra team"
+9,赵雷,本科 2010-2014 浙江大学 数学 后于 2014-2017 在中科院读硕士
+10,Eva Müller,"PhD candidate at ETH Zurich, Computer Vision, 2020-present"
