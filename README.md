@@ -4,7 +4,7 @@
 
 **A schema-driven, AI-powered data cleaning and structured extraction platform.**
 
-*Turn messy free-form text in your spreadsheets into clean structured tables. No code required.*
+*Turn messy free-form text in your spreadsheets into clean structured tables.*
 
 ![Status][status-shield]
 [![License: MIT][license-shield]][license-url]
@@ -63,12 +63,12 @@ Every column is hand-editable. The whole CSV/XLSX is one click to download. Garb
 
 ## Who is this for
 
-- **Anyone with a messy Excel column** who wants AI to clean it up — without writing code, learning prompt engineering, or shipping data to a third-party SaaS.
-- **Data teams** who keep getting one-off "can you parse this spreadsheet" requests and want a reusable internal tool.
-- **Developers** evaluating LLM-based extraction pipelines who want a working reference implementation with tests, a 1000-row eval harness, and clean abstractions.
+- **Developers and data engineers** tired of writing one-off Python scripts every time someone hands them a messy spreadsheet. This is the productized version of that script.
+- **Data teams** who want a reusable internal tool — one person sets it up once, teammates use the web UI for their own files.
+- **People evaluating LLM-based extraction pipelines** who want a working reference implementation with tests, a 1000-row eval harness, prompt-engineering rules in source, and clean provider abstractions.
 - **People building portfolios** — this repo is intentionally structured to read like a polished open-source project, not a tutorial.
 
-If you can install Docker Desktop and run one command, you can use this tool.
+**Not for**: completely non-technical users running it solo today. First-time setup needs a terminal (one `docker compose up` command, or local Python+Node). There is **no hosted version yet** — see [Roadmap V6](#roadmap) for plans.
 
 ## Architecture
 
@@ -139,9 +139,9 @@ The worker runs this flow concurrently for up to `MAX_CONCURRENCY` rows at a tim
 
 There are two paths. Pick one based on what you have installed.
 
-### Path 1: I just want to use it (Docker, ~5 minutes)
+### Path 1: Easiest setup (Docker, ~5 minutes)
 
-This path requires no Python knowledge, no Node.js setup, no `pip install` headaches.
+The fewest moving parts. You still need a terminal and Docker Desktop, but you don't have to know Python or Node.
 
 **Step 1 — Install Docker Desktop.** Free download for Mac/Windows/Linux: <https://www.docker.com/products/docker-desktop/>. After installing, launch it once so the whale icon sits in your menu bar / task tray.
 
@@ -383,7 +383,8 @@ That's the whole loop. Upload, run, review, export. Original spreadsheet untouch
 ## FAQ
 
 **Do I need to know how to code?**
-No. Once the app is running, the entire workflow is a web UI: upload, click, edit, download. You only need the command line for the initial `docker compose up`. That command is the same on Mac, Windows, and Linux.
+**To start the app for the first time, yes** — you need a terminal and you have to run one command (`docker compose up --build` if you have Docker, or a few commands for the local Python+Node path). There is no hosted version, no installer, no double-click app yet.
+**Once it's running, the workflow itself is GUI** — upload, click, edit, download. So a non-technical teammate can use a shared instance after a developer sets it up. But solo first-time setup is a developer task today.
 
 **Do I need an API key?**
 Not to try the demo. The default mode uses a built-in heuristic that handles the bundled sample CSV well enough to see the full UI flow. For real cleaning quality on your own data, set up an Anthropic API key — see [Configuring real AI](#configuring-real-ai-anthropic).
@@ -536,7 +537,7 @@ A longer write-up lives in [`docs/background.md`](./docs/background.md).
 ### Design principles
 
 - **No half-baked features.** V1 narrowly covers one use case (row-wise Excel/CSV with one built-in template) end-to-end. Custom schemas, document-wise extraction, OCR, auth, queues — all explicitly deferred to numbered roadmap versions, not pretended-implemented.
-- **The mock is a fallback, not a feature.** A heuristic mock exists so anyone can run the demo without an API key. Real extraction quality requires a real model — and the README says so honestly.
+- **The mock is a fallback, not a feature.** A heuristic mock exists so the demo runs without an API key after setup is done. Real extraction quality requires a real model — and the README says so honestly.
 - **Measure, don't guess.** A 1000-row eval harness with synthetic ground truth ships in `evaluation/`. The README's accuracy numbers come from that harness, not from vibes.
 - **Architecture over polish.** `BaseLLMClient` already hosts Mock and Anthropic side by side. Adding OpenAI is a single subclass. The frontend uses one HTTP wrapper. The DB schema has space for V2 custom templates without migrations.
 

@@ -4,7 +4,7 @@
 
 **一个基于字段 Schema 的 AI 数据清洗与结构化抽取平台。**
 
-*把表格里那些乱七八糟的自然语言文本，自动整理成干净的结构化数据表。无需编码。*
+*把表格里那些乱七八糟的自然语言文本，自动整理成干净的结构化数据表。*
 
 ![Status][status-shield]
 [![License: MIT][license-shield]][license-url]
@@ -63,12 +63,12 @@ from     to        school              major                  scholar    is_work
 
 ## 适合哪些人
 
-- **任何手头有脏 Excel 列的人** —— 不想写代码、不想学 prompt engineering、不想把数据交给第三方 SaaS。
-- **数据团队** —— 老是收到"帮我解析一下这个表"的一次性需求，需要一个可复用的内部工具。
-- **正在调研 LLM 抽取管线的开发者** —— 想看一份带测试、带 1000 行评测脚手架、抽象清晰的参考实现。
+- **开发者 / 数据工程师** —— 受够了每次同事甩一个脏 Excel 就要现写一个一次性 Python 脚本。这就是把那种脚本产品化之后的版本。
+- **数据团队** —— 想要一个可复用的内部工具：一个人装一次，全组人对着 Web UI 各用各的文件。
+- **正在调研 LLM 抽取管线的人** —— 想看一份带测试、带 1000 行评测脚手架、prompt 规则在源码里、provider 抽象干净的参考实现。
 - **正在做作品集的人** —— 这个仓库故意按"成熟开源项目"的样子组织，不是教程。
 
-只要你会装 Docker Desktop 并能在终端跑一行命令，就能用这个工具。
+**不适合**：完全没技术背景、想一个人单独跑起来的用户。首次启动需要终端（一行 `docker compose up` 或本地 Python+Node 几行命令）。**目前没有线上托管版**，详见 [Roadmap V6](#roadmap)。
 
 ## 架构
 
@@ -139,9 +139,9 @@ worker 同时并发处理至多 `MAX_CONCURRENCY` 行，前端每 2 秒轮询 `G
 
 两条路，按你电脑上已经装了什么挑一条。
 
-### 路径 1：我只是想用一下（Docker，约 5 分钟）
+### 路径 1：最简安装（Docker，约 5 分钟）
 
-这条路不需要懂 Python、不需要懂 Node.js、不需要折腾 `pip install`。
+启动环节最少。但你**还是要会用终端**、**还是要装 Docker Desktop** —— 只是不用懂 Python 或 Node。
 
 **第 1 步 —— 装 Docker Desktop。** Mac / Windows / Linux 免费下载：<https://www.docker.com/products/docker-desktop/>。装完后启动一次，让那个鲸鱼图标停在菜单栏 / 任务栏上。
 
@@ -383,7 +383,8 @@ id,name,experience,from,to,school,major,scholar,is_work_experience,_status
 ## FAQ
 
 **我不会写代码能用吗？**
-能。整个工作流就是 UI：上传、点击、编辑、下载。你只需要在最开始的安装阶段在终端跑一次 `docker compose up`。这条命令在 Mac / Windows / Linux 上完全一样。
+**第一次启动需要会用终端** —— 要跑一行命令（有 Docker 的话 `docker compose up --build`；走本地 Python+Node 路径就是几行命令）。目前没有线上托管版、没有安装包、没有双击就开的桌面 app。
+**一旦跑起来，工作流本身是 GUI** —— 上传、点击、编辑、下载。所以一个非技术同事可以在开发者搭好的实例上正常使用。但**自己一个人从零启动是个开发任务**。
 
 **必须要 API key 吗？**
 试用不需要。默认 demo 模式用内置启发式客户端，跑自带示例 CSV 就能看到完整 UI 流程。要在自己数据上看真实清洗效果，配一下 Anthropic key（见 [配置真实 AI](#配置真实-ai-anthropic)）。
@@ -536,7 +537,7 @@ V1 全栈 AI 抽取 MVP   <-- 当前仓库
 ### 设计原则
 
 - **不留半成品。** V1 故意只把一个用例（行级 Excel/CSV + 一个内置模板）做透。自定义 schema、文档级抽取、OCR、认证、队列 —— 全部明确放到编号的路线图里，绝不假装已完成。
-- **Mock 是 fallback，不是 feature。** 启发式 Mock 存在的唯一原因是让你不带 key 也能跑 demo。要真实抽取效果就得用真模型 —— README 说得很坦白。
+- **Mock 是 fallback，不是 feature。** 启发式 Mock 存在的唯一原因是 demo 部署完之后不带 key 也能跑通。要真实抽取效果就得用真模型 —— README 说得很坦白。
 - **测，不要靠感觉。** `evaluation/` 里有一个带合成 ground truth 的 1000 行评测脚手架。README 里的准确率数字来自这个脚手架，不是 PPT。
 - **架构胜过抛光。** `BaseLLMClient` 已经同时托管 Mock 和 Anthropic。新增 OpenAI 只需要写一个 subclass。前端用一个统一 HTTP 封装。DB schema 留好了 V2 自定义模板的空间，不需要 migration。
 
